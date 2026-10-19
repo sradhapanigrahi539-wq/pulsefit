@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseFit Pro — AI Health Coach, Personalized Diet, Workouts & Smart Alarms</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+            },
+            cyanBrand: {
+              400: '#22d3ee',
+              500: '#06b6d4',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Chart.js for smooth Vitals & Weight progress graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Canvas Confetti for celebratory milestones -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-[#070a13] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-[#070a13]/85 backdrop-blur-xl border-b border-slate-800/80 px-4 lg:px-8 py-3.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchTab('dashboard')">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <span class="text-xl">⚡</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl font-extrabold tracking-tight font-heading bg-gradient-to-r from-white via-slate-100 to-emerald-400 bg-clip-text text-transparent">PULSEFIT</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">PRO</span>
+          </div>
+          <p class="text-[11px] text-slate-400 tracking-wider">AI Diet • Targeted Training • Smart Alarms</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Ribbon (Desktop) -->
+      <div class="hidden md:flex items-center gap-6 text-xs border border-slate-800 bg-slate-900/60 rounded-full px-5 py-2">
+        <!-- Date Badge -->
+        <div class="flex items-center gap-2 text-slate-300">
+          <span>📅</span>
+          <span id="currentDateBadge" class="font-medium">Today</span>
+        </div>
+        <div class="w-px h-3 bg-slate-800"></div>
+        <!-- Live BPM Badge -->
+        <div class="flex items-center gap-2 text-rose-400 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.switchTab('vitals')">
+          <span class="animate-heart text-base inline-block">❤️</span>
+          <span class="font-mono font-bold text-white text-sm"><span class="current-bpm-val">72</span> BPM</span>
+        </div>
+        <div class="w-px h-3 bg-slate-800"></div>
+        <!-- Next Alarm Ribbon -->
+        <div class="flex items-center gap-2 text-amber-400 cursor-pointer hover:opacity-80 transition-opacity" onclick="window.switchTab('alarms')">
+          <span>⏰</span>
+          <span class="text-slate-300">Next: <span class="font-bold text-white font-mono">13:00</span> Lunch</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <!-- Heart Sound Toggle -->
+        <button id="toggleHeartSoundBtn" onclick="window.vitalsMonitor.toggleSound()" class="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-400 transition-all flex items-center gap-1.5" title="Toggle Heartbeat Audio">
+          <span>🔇 Heart Audio OFF</span>
+        </button>
+
+        <!-- AI Coach Quick Pill -->
+        <button onclick="window.switchTab('chat')" class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-slate-950"></span>
+          </span>
+          <span>AI Coach Aero</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Secondary Tab Navigation Bar -->
+  <nav class="bg-[#0b101e]/90 border-b border-slate-800/80 sticky top-[69px] z-30 px-4 overflow-x-auto no-scrollbar">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 py-2">
+      <button data-tab="dashboard" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+        <span>🏠</span>
+        <span>Dashboard</span>
+      </button>
+
+      <button data-tab="chat" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>💬</span>
+        <span>AI Health Coach</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      </button>
+
+      <button data-tab="diet" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>🥗</span>
+        <span>Diet & Nutrition</span>
+      </button>
+
+      <button data-tab="workout" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>🏋️</span>
+        <span>Workout Arena</span>
+      </button>
+
+      <button data-tab="alarms" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>⏰</span>
+        <span>Alarms & Reminders</span>
+        <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-mono">8</span>
+      </button>
+
+      <button data-tab="vitals" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>❤️</span>
+        <span>Heart Rate & Vitals</span>
+        <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+      </button>
+
+      <button data-tab="analytics" class="nav-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-slate-400 hover:bg-slate-800/60 border border-transparent">
+        <span>📊</span>
+        <span>Progress & Reports</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 lg:p-8">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: DASHBOARD VIEW -->
+    <!-- ========================================== -->
+    <section id="view-dashboard" class="view-tab-content space-y-6">
+      
+      <!-- Welcome Hero Banner -->
+      <div class="relative overflow-hidden rounded-3xl p-6 md:p-8 bg-gradient-to-r from-slate-900 via-slate-900/90 to-emerald-950/40 border border-slate-800/80 shadow-2xl">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="space-y-2">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span>AI Coaching Engine Active</span>
+            </div>
+            <h1 class="text-2xl md:text-4xl font-extrabold tracking-tight text-white font-heading">
+              Welcome Back, <span class="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Athlete</span>
+            </h1>
+            <p class="text-sm md:text-base text-slate-400 max-w-2xl leading-relaxed">
+              Your metabolism is optimized for <strong class="text-white">Lean Athletic Hypertrophy</strong>. Maintain scheduled meal windows and hit your target heart rate zones for peak cellular recovery.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <button onclick="window.switchTab('chat')" class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-xl shadow-emerald-500/20 transition-all flex items-center gap-2">
+              <span>💬 Chat with Coach</span>
+            </button>
+            <button onclick="window.switchTab('workout')" class="px-5 py-3 rounded-2xl bg-slate-800/90 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition-all flex items-center gap-2">
+              <span>🏋️ Today's Workout</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Decorative background glow -->
+        <div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Metric 1: Calories Consumed vs Budget -->
+        <div class="glass-panel rounded-3xl p-5 relative overflow-hidden transition-all hover:scale-[1.01]">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider">Caloric Budget</span>
+            <span class="text-amber-400">🔥 Target 2,150 kcal</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="dashboardConsumedCals" class="text-3xl font-extrabold font-mono text-white">450</span>
+            <span class="text-xs text-slate-400">/ 2,150 kcal consumed</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full mt-3 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all" style="width: 21%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2 font-mono">
+            <span>Remaining: <strong class="text-white">1,700 kcal</strong></span>
+            <button onclick="window.switchTab('diet')" class="text-emerald-400 hover:underline">Log Meal →</button>
+          </div>
+        </div>
+
+        <!-- Metric 2: Live Heart Rate -->
+        <div class="glass-panel rounded-3xl p-5 relative overflow-hidden transition-all hover:scale-[1.01] cursor-pointer" onclick="window.switchTab('vitals')">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider">Heart Rate Pulse</span>
+            <span class="text-rose-400 font-bold flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Live EKG
+            </span>
+          </div>
+          <div class="flex items-baseline gap-3">
+            <span class="text-3xl font-extrabold font-mono text-white"><span class="current-bpm-val">72</span></span>
+            <span class="text-xs text-rose-400 font-semibold font-mono">BPM (Resting)</span>
+          </div>
+          <!-- Miniature waveform indicator -->
+          <div class="h-7 w-full my-2 flex items-center gap-1">
+            <div class="w-1 bg-rose-500/80 h-3 rounded-full animate-pulse"></div>
+            <div class="w-1 bg-rose-500/80 h-5 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-2 rounded-full"></div>
+            <div class="w-1 bg-rose-500 h-7 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-3 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-4 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-2 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-6 rounded-full animate-pulse"></div>
+            <div class="w-1 bg-rose-500/80 h-3 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-2 rounded-full"></div>
+            <div class="w-1 bg-rose-500/80 h-4 rounded-full"></div>
+            <div class="w-1 bg-rose-500 h-7 rounded-full"></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+            <span>BP: 118/78</span>
+            <span class="text-cyan-400">Tap to Beat →</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Active Calories & Steps -->
+        <div class="glass-panel rounded-3xl p-5 relative overflow-hidden transition-all hover:scale-[1.01]">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider">Active Burn & Steps</span>
+            <span class="text-cyan-400 font-bold">Goal: 10,000</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="dashboardStepsDisplay" class="text-3xl font-extrabold font-mono text-white">6,420</span>
+            <span class="text-xs text-slate-400">steps</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full mt-3 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full" style="width: 64%"></div>
+          </div>
+          <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2 font-mono">
+            <span>Burned: <strong id="dashboardBurnedCalsDisplay" class="text-cyan-400">480 kcal</strong></span>
+            <button onclick="window.pulseApp.addSteps(1000)" class="text-emerald-400 hover:underline">+1,000 Steps</button>
+          </div>
+        </div>
+
+        <!-- Metric 4: Daily Hydration Tracker -->
+        <div class="glass-panel rounded-3xl p-5 relative overflow-hidden transition-all hover:scale-[1.01]">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+            <span class="font-medium uppercase tracking-wider">Hydration Level</span>
+            <span id="waterPercentDisplay" class="text-cyan-400 font-bold font-mono">31%</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="waterCurrentDisplay" class="text-2xl font-extrabold font-mono text-white">1000 / 3200 ml</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full mt-3 overflow-hidden">
+            <div id="waterProgressBar" class="h-full bg-cyan-400 rounded-full transition-all duration-300" style="width: 31%"></div>
+          </div>
+          <div class="flex items-center justify-between gap-1 mt-3">
+            <button onclick="window.pulseApp.addWater(250)" class="flex-1 py-1 rounded-lg bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 text-[11px] font-bold border border-cyan-500/20 transition-all">
+              +250ml
+            </button>
+            <button onclick="window.pulseApp.addWater(500)" class="flex-1 py-1 rounded-lg bg-cyan-500/15 text-cyan-400 hover:bg-cyan-500/25 text-[11px] font-bold border border-cyan-500/20 transition-all">
+              +500ml
+            </button>
+            <button onclick="window.pulseApp.resetWater()" class="px-2 py-1 rounded-lg text-slate-500 hover:text-slate-300 text-[11px]" title="Reset">
+              ↺
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Schedule & Next Alarm Preview Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Next Scheduled Alarm Card -->
+        <div class="glass-panel rounded-3xl p-6 lg:col-span-1 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+              <span>⏰</span> Next Alarm & Reminder
+            </h3>
+            <span class="text-xs text-slate-400">Synchronized</span>
+          </div>
+
+          <div id="dashboardNextAlarmBadge" class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+            <!-- Populated via JS -->
+          </div>
+
+          <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span class="text-slate-400">Total Active Reminders: <strong class="text-white">8</strong></span>
+            <button onclick="window.switchTab('alarms')" class="text-emerald-400 font-semibold hover:underline">View All Alarms →</button>
+          </div>
+        </div>
+
+        <!-- Today's Workout Focus -->
+        <div class="glass-panel rounded-3xl p-6 lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+                <span>🏋️</span> Today's Workout Routine
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Customized for: <strong class="text-emerald-400">Lean Athletic & V-Taper Definition</strong></p>
+            </div>
+            <button onclick="window.switchTab('workout')" class="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-bold transition-all">
+              Launch Arena →
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-slate-800">🏋️</span>
+              <div>
+                <p class="text-xs font-bold text-white">Incline Dumbbell Press</p>
+                <p class="text-[11px] text-slate-400">4 Sets • 10-12 Reps • Upper Chest</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-slate-800">⚡</span>
+              <div>
+                <p class="text-xs font-bold text-white">Single-Arm DB Rows</p>
+                <p class="text-[11px] text-slate-400">4 Sets • 10-12 Reps • Lats & Posture</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-slate-800">💪</span>
+              <div>
+                <p class="text-xs font-bold text-white">Cable Lateral Raises</p>
+                <p class="text-[11px] text-slate-400">4 Sets • 12-15 Reps • Lateral Delts</p>
+              </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center gap-3">
+              <span class="text-2xl p-2 rounded-xl bg-slate-800">🔥</span>
+              <div>
+                <p class="text-xs font-bold text-white">Triceps Rope Extension</p>
+                <p class="text-[11px] text-slate-400">3 Sets • 15 Reps • Arm Definition</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coach Aero Quick Insight Box -->
+      <div class="glass-panel rounded-3xl p-6 border-l-4 border-l-emerald-500 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl font-bold shrink-0 border border-emerald-500/30">
+            💡
+          </div>
+          <div>
+            <h4 class="font-heading font-bold text-white text-base">Coach Aero's Daily Physiological Tip</h4>
+            <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
+              Consuming your pre-workout carbohydrate meal 45-60 minutes before training elevates muscle glycogen and blunts cortisol response. Don't skip your 500ml hydration alarm before training!
+            </p>
+          </div>
+        </div>
+
+        <button onclick="window.switchTab('chat')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 whitespace-nowrap self-end md:self-center">
+          Ask Aero a Question
+        </button>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: AI HEALTH COACH (CHAT) -->
+    <!-- ========================================== -->
+    <section id="view-chat" class="view-tab-content hidden space-y-4">
+      
+      <!-- Chat Interface Container -->
+      <div class="glass-panel rounded-3xl border border-slate-800 overflow-hidden flex flex-col h-[750px] shadow-2xl">
+        
+        <!-- Chat Header -->
+        <div class="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-500/20">
+                ⚡
+              </div>
+              <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-heading font-bold text-white text-base">Coach Aero</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">AI Master Specialist</span>
+              </div>
+              <p class="text-xs text-slate-400">Diagnostic health assessment • Tailored Diet & Workouts • Alarm scheduler</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="window.chatCoach.handleUserSubmit('Start Diagnostic Assessment')" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-400 border border-emerald-500/30 transition-all">
+              🔄 Retake Assessment
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Stream Scrollable Area -->
+        <div id="chatMessagesContainer" class="flex-1 p-4 md:p-6 overflow-y-auto space-y-4">
+          <!-- Populated by chat-coach.js -->
+        </div>
+
+        <!-- Typing Indicator -->
+        <div id="aiTypingIndicator" class="hidden px-6 py-2 text-xs text-slate-400 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-bounce"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.2s]"></span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-bounce [animation-delay:0.4s]"></span>
+          <span>Aero is analyzing your physiological metrics...</span>
+        </div>
+
+        <!-- Prompt suggestions bar -->
+        <div class="px-4 py-2 bg-slate-900/60 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider shrink-0">Quick Ask:</span>
+          <button onclick="window.chatCoach.handleUserSubmit('What should I eat before workout?')" class="px-3 py-1 rounded-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 whitespace-nowrap transition-all">
+            ⚡ Pre-workout fuel?
+          </button>
+          <button onclick="window.chatCoach.handleUserSubmit('How to lose lower belly fat?')" class="px-3 py-1 rounded-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 whitespace-nowrap transition-all">
+            🔥 Burn lower belly fat?
+          </button>
+          <button onclick="window.chatCoach.handleUserSubmit('What is Zone 2 cardio?')" class="px-3 py-1 rounded-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 whitespace-nowrap transition-all">
+            ❤️ Zone 2 cardio explained
+          </button>
+          <button onclick="window.chatCoach.handleUserSubmit('Show my diet chart')" class="px-3 py-1 rounded-full text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 whitespace-nowrap transition-all">
+            🥗 View Diet Chart
+          </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <div class="p-3 md:p-4 bg-slate-900 border-t border-slate-800">
+          <form onsubmit="event.preventDefault(); const inp = document.getElementById('chatInput'); window.chatCoach.handleUserSubmit(inp.value); inp.value = '';" class="flex items-center gap-2">
+            <input id="chatInput" type="text" placeholder="Type your health goal, body details, or ask a nutrition question..." class="flex-1 bg-slate-950 border border-slate-700/80 rounded-2xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors">
+            <button type="submit" class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-1.5 shrink-0">
+              <span>Send</span>
+              <span>🚀</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: DIET & NUTRITION HUB -->
+    <!-- ========================================== -->
+    <section id="view-diet" class="view-tab-content hidden space-y-6">
+      
+      <!-- Diet Header Banner -->
+      <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+            <span>🥗 Personalized Nutrient Timing</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white font-heading">
+            Your Precision Nutrition Blueprint
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
+            Meals engineered to fuel muscle protein synthesis, accelerate fat metabolism, and synchronize with your scheduled alarms.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="window.dietPlanner.printPlan()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all flex items-center gap-2 no-print">
+            <span>🖨️ Export / Print Chart</span>
+          </button>
+          <button onclick="window.switchTab('chat')" class="px-4 py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1.5 no-print">
+            <span>✨ Regenerate with AI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Macro Target Stat Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-panel rounded-2xl p-4 text-center">
+          <p class="text-xs text-slate-400 font-medium">Daily Calorie Target</p>
+          <p id="dietDayTotalCals" class="text-2xl font-black font-mono text-amber-400 mt-1">2,150 kcal</p>
+          <p class="text-[11px] text-slate-500 mt-1">Sustained metabolic budget</p>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 text-center">
+          <p class="text-xs text-slate-400 font-medium">Protein Target</p>
+          <p id="dietDayTotalProtein" class="text-2xl font-black font-mono text-emerald-400 mt-1">150g</p>
+          <p class="text-[11px] text-slate-500 mt-1">Logged: <strong id="dietConsumedProtein" class="text-white">0g</strong></p>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 text-center">
+          <p class="text-xs text-slate-400 font-medium">Carbohydrates</p>
+          <p id="dietDayTotalCarbs" class="text-2xl font-black font-mono text-cyan-400 mt-1">220g</p>
+          <p class="text-[11px] text-slate-500 mt-1">Logged: <strong id="dietConsumedCarbs" class="text-white">0g</strong></p>
+        </div>
+        <div class="glass-panel rounded-2xl p-4 text-center">
+          <p class="text-xs text-slate-400 font-medium">Healthy Fats</p>
+          <p id="dietDayTotalFats" class="text-2xl font-black font-mono text-purple-400 mt-1">65g</p>
+          <p class="text-[11px] text-slate-500 mt-1">Logged: <strong id="dietConsumedFats" class="text-white">0g</strong></p>
+        </div>
+      </div>
+
+      <!-- Day Selector Pills -->
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <button onclick="window.dietPlanner.setDay('Monday')" data-day="Monday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/25">Monday</button>
+        <button onclick="window.dietPlanner.setDay('Tuesday')" data-day="Tuesday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Tuesday</button>
+        <button onclick="window.dietPlanner.setDay('Wednesday')" data-day="Wednesday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Wednesday</button>
+        <button onclick="window.dietPlanner.setDay('Thursday')" data-day="Thursday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Thursday</button>
+        <button onclick="window.dietPlanner.setDay('Friday')" data-day="Friday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Friday</button>
+        <button onclick="window.dietPlanner.setDay('Saturday')" data-day="Saturday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Saturday</button>
+        <button onclick="window.dietPlanner.setDay('Sunday')" data-day="Sunday" class="diet-day-pill px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-slate-800">Sunday</button>
+      </div>
+
+      <!-- Meals List Container -->
+      <div id="dietMealsContainer" class="space-y-4">
+        <!-- Rendered by diet-planner.js -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: WORKOUT ARENA -->
+    <!-- ========================================== -->
+    <section id="view-workout" class="view-tab-content hidden space-y-6">
+      
+      <!-- Workout Banner -->
+      <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-2">
+            <span>🏋️ Targeted Hypertrophy & Sculpting</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white font-heading">
+            Workout Arena & Execution Tracker
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
+            Track your working sets, follow form execution cues, and activate the rest interval timer with audible countdown buzzers.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="window.workoutArena.scheduleWorkoutAlarm()" class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5">
+            <span>⏰ Set Workout Alarm</span>
+          </button>
+          <button onclick="window.workoutArena.startRestTimer(60)" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-1.5">
+            <span>⏱ Quick Rest (60s)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Workout Day Tabs -->
+      <div id="workoutDayTabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <!-- Populated via workout-arena.js -->
+      </div>
+
+      <!-- Active Day Title -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 id="activeDayTitle" class="text-lg font-heading font-bold text-white">Day 1: Upper Body Sculpt & Definition</h3>
+        <span class="text-xs text-slate-400">Click checkboxes to log sets</span>
+      </div>
+
+      <!-- Exercises List Container -->
+      <div id="workoutExercisesContainer" class="space-y-4">
+        <!-- Rendered by workout-arena.js -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: ALARMS & REMINDERS -->
+    <!-- ========================================== -->
+    <section id="view-alarms" class="view-tab-content hidden space-y-6">
+      
+      <!-- Alarms Banner -->
+      <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-2">
+            <span>⏰ Circadian Clock Synchronization</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white font-heading">
+            Precision Alarms & Reminders
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
+            Never miss a meal, pre-workout fuel window, hydration boost, or sleep recovery time. Built-in audio chimes ring directly in-browser.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="document.getElementById('addAlarmModal').classList.remove('hidden'); document.getElementById('addAlarmModal').classList.add('flex');" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+            <span>+ Add Alarm</span>
+          </button>
+          <button onclick="window.alarmManager.requestNotificationPermission()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5">
+            <span>🔔 Enable Web Notifications</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Alarms List Container -->
+      <div id="alarmsListContainer" class="space-y-3">
+        <!-- Rendered by alarm-manager.js -->
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 6: HEART RATE & VITALS -->
+    <!-- ========================================== -->
+    <section id="view-vitals" class="view-tab-content hidden space-y-6">
+      
+      <!-- Vitals Banner -->
+      <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 mb-2">
+            <span>❤️ Cardiovascular Biosensors</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white font-heading">
+            Heart Rate & Vitals Monitor
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
+            Real-time animated electrocardiogram (EKG), pulse detection, and training zone optimization (Tanaka & Karvonen formulas).
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="window.vitalsMonitor.startSensorScan()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-slate-950 font-bold text-xs shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2">
+            <span>📷 Optical Pulse Scan</span>
+          </button>
+          <button onclick="window.vitalsMonitor.toggleSound()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5">
+            <span>🔊 Heart Audio</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- EKG Oscilloscope Screen Card -->
+      <div class="glass-panel rounded-3xl p-6 space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-4">
+            <!-- Pulsing Heart Icon -->
+            <div id="animatedHeartIcon" class="w-14 h-14 rounded-2xl bg-rose-500/15 text-rose-400 flex items-center justify-center text-3xl animate-heart border border-rose-500/30">
+              ❤️
+            </div>
+            <div>
+              <div class="flex items-baseline gap-2">
+                <span class="text-4xl md:text-5xl font-black font-mono tracking-tight text-white current-bpm-val">72</span>
+                <span class="text-sm font-bold text-rose-400 font-mono">BPM</span>
+              </div>
+              <p class="text-xs text-slate-400">Resting Heart Rate • Sinus Rhythm Normal</p>
+            </div>
+          </div>
+
+          <!-- Zone Badge & Tanaka Max HR -->
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <span id="currentZoneBadge" class="px-3 py-1 rounded-full text-xs font-bold border border-emerald-400 text-emerald-400 bg-slate-900/60">
+                Zone 2: Fat Burning Engine
+              </span>
+              <p id="currentZoneDesc" class="text-[11px] text-slate-400 mt-1">Optimal lipid oxidation & aerobic endurance</p>
+            </div>
+            <div class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 text-center">
+              <p class="text-[10px] text-slate-400 uppercase font-semibold">Max HR</p>
+              <p id="maxHrDisplay" class="text-base font-bold font-mono text-cyan-400">190 BPM</p>
+              <p id="bpmMaxPercentDisplay" class="text-[10px] text-slate-500 font-mono">38% of Max</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-time EKG Canvas -->
+        <div class="relative w-full rounded-2xl overflow-hidden border border-emerald-500/30 bg-[#0a0f1d] shadow-inner">
+          <canvas id="ekgCanvas" class="w-full h-[140px] block"></canvas>
+          <div class="absolute top-2 left-3 flex items-center gap-2 text-[10px] font-mono text-emerald-400/80 pointer-events-none">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>LEAD II • 25 mm/s • 10 mm/mV</span>
+          </div>
+        </div>
+
+        <!-- Interactive Tap-to-Beat and Manual Slider -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          
+          <!-- Tap to Beat Box -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between gap-3">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Tap-to-Beat Pulse Detector</h4>
+              <p id="tapPulseStatus" class="text-xs text-slate-400 mt-0.5">Tap the pulse button along with your heartbeat</p>
+            </div>
+            <button id="tapPulseBtn" onclick="window.vitalsMonitor.handleTapBeat()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white font-extrabold text-sm shadow-lg shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+              <span>💓 TAP PULSE BEAT</span>
+            </button>
+          </div>
+
+          <!-- Adjust BPM Slider -->
+          <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between gap-2">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold uppercase tracking-wider text-slate-300">Manual BPM Simulator</span>
+              <span class="font-mono text-white font-bold"><span class="current-bpm-val">72</span> BPM</span>
+            </div>
+            <input id="bpmSlider" type="range" min="45" max="190" value="72" oninput="window.vitalsMonitor.setBpm(this.value)" class="w-full accent-rose-500 cursor-pointer">
+            <div class="flex items-center justify-between text-[11px] text-slate-500 font-mono">
+              <span>45 (Resting)</span>
+              <span>120 (Cardio)</span>
+              <span>190 (Max Burst)</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Training Zones & History Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Heart Rate Training Zones -->
+        <div class="glass-panel rounded-3xl p-6 space-y-3">
+          <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+            <span>🎯</span> Heart Rate Training Zones
+          </h3>
+          <p class="text-xs text-slate-400">Calculated specifically for your age and cardiovascular threshold:</p>
+          <div id="zoneBarsContainer" class="space-y-2 pt-2">
+            <!-- Populated via vitals-heartrate.js -->
+          </div>
+        </div>
+
+        <!-- Today's Vitals Trend Chart & Log -->
+        <div class="glass-panel rounded-3xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-heading font-bold text-base text-white flex items-center gap-2">
+              <span>📈</span> Heart Rate Trajectory (BPM)
+            </h3>
+            <button onclick="window.vitalsMonitor.logVitals({ bpm: window.vitalsMonitor.bpm, type: 'Manual Check' })" class="px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-emerald-400 border border-emerald-500/30 transition-all">
+              + Log Current
+            </button>
+          </div>
+
+          <!-- Chart.js Canvas -->
+          <div class="h-44 w-full">
+            <canvas id="vitalsTrendChart"></canvas>
+          </div>
+
+          <!-- Recent Logs -->
+          <div class="border-t border-slate-800 pt-3">
+            <h4 class="text-xs font-semibold text-slate-400 mb-2">Recent Biosensor Readings</h4>
+            <div id="vitalsLogList" class="space-y-2">
+              <!-- Populated by vitals-heartrate.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 7: ANALYTICS & PROGRESS -->
+    <!-- ========================================== -->
+    <section id="view-analytics" class="view-tab-content hidden space-y-6">
+      
+      <!-- Analytics Banner -->
+      <div class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-2">
+            <span>📊 Milestone & Body Composition Tracker</span>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white font-heading">
+            Progress Analytics & Transformation
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400 mt-1 max-w-2xl">
+            Track your weight trajectory, active caloric burn, streak milestones, and download comprehensive progress sheets.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all flex items-center gap-1.5 no-print">
+            <span>📄 Print Progress Summary</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Weight Trend & Logger -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="glass-panel rounded-3xl p-6 lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-heading font-bold text-base text-white">Bodyweight Trajectory (kg)</h3>
+            <span class="text-xs text-emerald-400 font-semibold font-mono">📉 Down 2.2 kg this month</span>
+          </div>
+          <div class="h-64 w-full">
+            <canvas id="weightTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Log Weight Form & Milestones -->
+        <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-4">
+          <div>
+            <h3 class="font-heading font-bold text-base text-white">Log Current Weight</h3>
+            <p class="text-xs text-slate-400 mt-1">Weigh yourself first thing in the morning for consistent readings.</p>
+            
+            <div class="mt-4 flex items-center gap-2">
+              <input id="weightLogInput" type="number" step="0.1" placeholder="e.g. 71.8" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white font-mono focus:outline-none focus:border-cyan-400">
+              <button onclick="const inp = document.getElementById('weightLogInput'); window.pulseApp.addWeightEntry(inp.value); inp.value = '';" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all">
+                Save
+              </button>
+            </div>
+          </div>
+
+          <!-- Badges & Streaks -->
+          <div class="border-t border-slate-800 pt-4 space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Achievements Unlocked</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2">
+                <span class="text-lg">💧</span>
+                <div>
+                  <p class="font-bold text-white text-[11px]">Hydration Champ</p>
+                  <p class="text-[10px] text-slate-500">Hit 3.2L goal</p>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2">
+                <span class="text-lg">🔥</span>
+                <div>
+                  <p class="font-bold text-white text-[11px]">7-Day Streak</p>
+                  <p class="text-[10px] text-slate-500">Consistent training</p>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2">
+                <span class="text-lg">🥗</span>
+                <div>
+                  <p class="font-bold text-white text-[11px]">Macro Master</p>
+                  <p class="text-[10px] text-slate-500">150g protein hit</p>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2">
+                <span class="text-lg">❤️</span>
+                <div>
+                  <p class="font-bold text-white text-[11px]">Cardio Elite</p>
+                  <p class="text-[10px] text-slate-500">Zone 2 optimized</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS & OVERLAYS -->
+  <!-- ========================================== -->
+
+  <!-- 1. Floating Workout Rest Timer Widget -->
+  <div id="restTimerWidget" class="fixed bottom-6 right-6 z-50 hidden">
+    <div class="glass-panel p-4 rounded-3xl border border-cyan-500/40 shadow-2xl flex items-center gap-4 bg-slate-950/95">
+      <!-- SVG Circular Progress -->
+      <div class="relative w-16 h-16 flex items-center justify-center">
+        <svg class="w-16 h-16 transform -rotate-90">
+          <circle cx="32" cy="32" r="28" stroke="#1e293b" stroke-width="5" fill="transparent" />
+          <circle id="restTimerProgressCircle" cx="32" cy="32" r="28" stroke="#06b6d4" stroke-width="5" fill="transparent" stroke-dasharray="175.9" stroke-dashoffset="0" class="transition-all duration-300" />
+        </svg>
+        <span id="restTimerCountdown" class="absolute font-mono font-bold text-sm text-white">0:60</span>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Rest Interval</h4>
+        <p class="text-xs text-slate-400">Deep nasal breathing...</p>
+        <div class="flex items-center gap-2 mt-2">
+          <button onclick="window.workoutArena.startRestTimer(30)" class="px-2 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 hover:text-white">+30s</button>
+          <button onclick="window.workoutArena.stopRestTimer()" class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 text-[10px] font-bold">Stop</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Alarm Trigger Modal (Full Screen Attention) -->
+  <div id="alarmTriggerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 md:p-8 text-center border-2 border-emerald-500 shadow-2xl animate-bounce [animation-iteration-count:3]">
+      <div id="alarmModalIcon" class="text-6xl mx-auto mb-3 animate-pulse">⏰</div>
+      <span id="alarmModalCategory" class="px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 uppercase tracking-widest">MEAL ALARM</span>
+      <h3 id="alarmModalTitle" class="text-2xl font-black text-white mt-2 font-heading">Power Breakfast</h3>
+      <p id="alarmModalTime" class="text-3xl font-black font-mono text-emerald-400 my-2">08:00</p>
+      <p id="alarmModalAdvice" class="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto mb-6">Fuel your body with your recommended macros and stay hydrated!</p>
+
+      <div class="flex items-center gap-3">
+        <button onclick="window.alarmManager.snoozeActiveAlarm(5)" class="flex-1 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-700 transition-all">
+          ⏳ Snooze (5m)
+        </button>
+        <button onclick="window.alarmManager.dismissActiveAlarm()" class="flex-1 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition-all">
+          ✓ Dismiss & Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Add Custom Alarm Modal -->
+  <div id="addAlarmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-heading font-bold text-lg text-white">Create Custom Reminder</h3>
+        <button onclick="document.getElementById('addAlarmModal').classList.add('hidden'); document.getElementById('addAlarmModal').classList.remove('flex');" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); 
+        const title = document.getElementById('newAlarmTitle').value;
+        const time = document.getElementById('newAlarmTime').value;
+        const cat = document.getElementById('newAlarmCategory').value;
+        const sound = document.getElementById('newAlarmSound').value;
+        window.alarmManager.addAlarm({ title, time, category: cat, sound });
+        document.getElementById('addAlarmModal').classList.add('hidden');
+        document.getElementById('addAlarmModal').classList.remove('flex');" class="space-y-4">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Alarm Title</label>
+          <input id="newAlarmTitle" type="text" required placeholder="e.g. Afternoon Protein Shake" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Time</label>
+            <input id="newAlarmTime" type="time" required value="16:00" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white font-mono focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+            <select id="newAlarmCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+              <option value="meal">🥗 Meal / Food</option>
+              <option value="workout">🏋️ Workout</option>
+              <option value="water">💧 Water / Hydration</option>
+              <option value="sleep">😴 Sleep / Rest</option>
+              <option value="supplement">💊 Supplement</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Chime Sound</label>
+          <select id="newAlarmSound" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+            <option value="chime">Harmonic Melodic Chime</option>
+            <option value="bell">Workout Boxing Bell</option>
+            <option value="beep">Digital Sport Beep</option>
+            <option value="energy">High Energy Fanfare</option>
+          </select>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-3">
+          <button type="button" onclick="document.getElementById('addAlarmModal').classList.add('hidden'); document.getElementById('addAlarmModal').classList.remove('flex');" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-emerald-500/20">Set Alarm</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Recipe Details Modal -->
+  <div id="recipeModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="glass-panel max-w-lg w-full rounded-3xl p-6 bg-slate-900 border border-slate-800 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="recipeModalType" class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Breakfast • High Protein</span>
+          <h3 id="recipeModalTitle" class="font-heading font-bold text-lg text-white mt-0.5">Avocado & Egg Sourdough</h3>
+        </div>
+        <button onclick="window.dietPlanner.closeRecipeModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2 text-center text-xs">
+        <div class="p-2 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Calories</p>
+          <p id="recipeModalCals" class="font-bold text-amber-400 font-mono mt-0.5">450 kcal</p>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Protein</p>
+          <p id="recipeModalProtein" class="font-bold text-emerald-400 font-mono mt-0.5">34g</p>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Carbs</p>
+          <p id="recipeModalCarbs" class="font-bold text-cyan-400 font-mono mt-0.5">32g</p>
+        </div>
+        <div class="p-2 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Fats</p>
+          <p id="recipeModalFats" class="font-bold text-purple-400 font-mono mt-0.5">18g</p>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Ingredients</h4>
+        <ul id="recipeIngredientsList" class="space-y-1.5 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+          <!-- Populated via JS -->
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Preparation Instructions</h4>
+        <ol id="recipePrepSteps" class="space-y-2 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+          <!-- Populated via JS -->
+        </ol>
+      </div>
+
+      <div class="pt-2 flex justify-end">
+        <button onclick="window.dietPlanner.closeRecipeModal()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all">
+          Close Recipe
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Exercise Details Modal -->
+  <div id="exerciseModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="glass-panel max-w-md w-full rounded-3xl p-6 bg-slate-900 border border-slate-800 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="exerciseModalMuscle" class="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">Target: Upper Chest</span>
+          <h3 id="exerciseModalTitle" class="font-heading font-bold text-lg text-white mt-0.5">Incline Dumbbell Press</h3>
+        </div>
+        <button onclick="window.workoutArena.closeExerciseModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center text-xs">
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Target Sets</p>
+          <p id="exerciseModalSets" class="font-bold text-white font-mono mt-0.5">4 Sets</p>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Rep Scheme</p>
+          <p id="exerciseModalReps" class="font-bold text-white font-mono mt-0.5">10-12 Reps</p>
+        </div>
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+          <p class="text-slate-400 text-[10px]">Rest Interval</p>
+          <p id="exerciseModalRest" class="font-bold text-cyan-400 font-mono mt-0.5">60s</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-950/70 p-4 rounded-2xl border border-slate-800">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
+          <span>💡</span> Biomechanical Form Cue
+        </h4>
+        <p id="exerciseModalCue" class="text-xs text-slate-300 leading-relaxed italic">
+          "Retract scapula, maintain 30-degree incline, press up along natural converging arc without clanging dumbbells at the top."
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="window.workoutArena.closeExerciseModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Optical Heart Rate Sensor Modal -->
+  <div id="opticalScanModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass-panel max-w-sm w-full rounded-3xl p-6 text-center border border-rose-500/40 shadow-2xl space-y-4 bg-slate-950">
+      <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+        <div class="w-20 h-20 rounded-full bg-rose-500/20 border-2 border-rose-500 flex items-center justify-center text-4xl animate-pulse">
+          📷
+        </div>
+        <span class="absolute inset-0 rounded-full border border-rose-400 animate-ping opacity-30"></span>
+      </div>
+
+      <h3 class="font-heading font-bold text-lg text-white">Photoplethysmography Scan</h3>
+      <p id="scanStatusText" class="text-xs text-slate-400 min-h-[36px]">Calibrating optical sensor & skin tone luminance...</p>
+
+      <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+        <div id="scanProgressBar" class="h-full bg-gradient-to-r from-rose-500 to-pink-500 rounded-full transition-all duration-150" style="width: 0%"></div>
+      </div>
+
+      <p class="text-[11px] text-slate-500">Hold steady. Analyzing subcutaneous vascular micro-pulses.</p>
+    </div>
+  </div>
+
+  <!-- 7. Global Floating Toast Notification -->
+  <div id="globalToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="glass-panel px-5 py-3 rounded-2xl bg-slate-900/95 border border-emerald-500/40 text-emerald-400 text-xs font-bold shadow-2xl flex items-center gap-2">
+      <span>⚡</span>
+      <span id="globalToastMessage">Notification</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-[#070a13] py-6 px-4 text-center text-xs text-slate-500 no-print">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white font-heading">PULSEFIT PRO</span>
+        <span>•</span>
+        <span>AI-Guided Fitness & Nutrition Architecture</span>
+      </div>
+      <p>© 2026 PulseFit Pro. Engineered for peak athletic performance, metabolic health & heart rate precision.</p>
+    </div>
+  </footer>
+
+  <!-- Core Application Scripts -->
+  <script src="audio-engine.js"></script>
+  <script src="alarm-manager.js"></script>
+  <script src="vitals-heartrate.js"></script>
+  <script src="diet-planner.js"></script>
+  <script src="workout-arena.js"></script>
+  <script src="chat-coach.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
